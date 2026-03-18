@@ -292,6 +292,7 @@ function OverviewPage({ data, weightUnit, stats }) {
 }
 
 function BPPage({ data, stats }) {
+  const [view, setView] = useState("average");
   const high = data.filter((r) => r.systolic >= 130).length;
   const low = data.filter((r) => r.systolic && r.systolic < 90).length;
   return (
@@ -308,12 +309,30 @@ function BPPage({ data, stats }) {
         <StatBox label="High Readings (≥130)" value={high} />
         <StatBox label="Low Readings (<90)" value={low} />
       </div>
-      <BPChart data={data} />
+
+      {/* Toggle */}
+      <div className="flex rounded-md border w-fit overflow-hidden text-xs">
+        <button
+          onClick={() => setView("average")}
+          className={`px-3 py-1.5 font-medium transition-colors ${view === "average" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          Daily Average
+        </button>
+        <button
+          onClick={() => setView("all")}
+          className={`px-3 py-1.5 font-medium transition-colors border-l ${view === "all" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          All Readings
+        </button>
+      </div>
+
+      <BPChart data={data} view={view} />
     </div>
   );
 }
 
 function PulsePage({ data, stats }) {
+  const [view, setView] = useState("average");
   const pulses = data.filter((r) => r.pulse).map((r) => r.pulse);
   return (
     <div className="space-y-6">
@@ -331,7 +350,24 @@ function PulsePage({ data, stats }) {
           value={pulses.length ? Math.min(...pulses) + " bpm" : "—"}
         />
       </div>
-      <PulseChart data={data} />
+
+      {/* Toggle */}
+      <div className="flex rounded-md border w-fit overflow-hidden text-xs">
+        <button
+          onClick={() => setView("average")}
+          className={`px-3 py-1.5 font-medium transition-colors ${view === "average" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          Daily Average
+        </button>
+        <button
+          onClick={() => setView("all")}
+          className={`px-3 py-1.5 font-medium transition-colors border-l ${view === "all" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          All Readings
+        </button>
+      </div>
+
+      <PulseChart data={data} view={view} />
     </div>
   );
 }
