@@ -1,11 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  Routes,
-  Route,
-  NavLink,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
+import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import {
   Moon,
   Sun,
@@ -27,6 +21,7 @@ import { DataTable } from "./components/DataTable";
 import { StatsCard } from "./components/StatsCard";
 import { DateRangePicker } from "./components/DateRangePicker";
 import { Button } from "./components/ui/button";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 const TABS = [
   { path: "/", label: "Overview" },
@@ -38,7 +33,9 @@ const TABS = [
 ];
 
 export default function App() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
   const [weightUnit, setWeightUnit] = useState("kg");
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
@@ -105,6 +102,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <ScrollToTop />
       {/* Header */}
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -151,7 +149,13 @@ export default function App() {
               variant="outline"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setDark((d) => !d)}
+              onClick={() =>
+                setDark((d) => {
+                  const next = !d;
+                  localStorage.setItem("theme", next ? "dark" : "light");
+                  return next;
+                })
+              }
             >
               {dark ? (
                 <Sun className="w-4 h-4" />
@@ -281,8 +285,8 @@ function OverviewPage({ data, weightUnit, stats }) {
         />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BPChart data={data} />
-        <PulseChart data={data} />
+        <BPChart data={data} compact />
+        <PulseChart data={data} compact />
         <WeightChart data={data} unit={weightUnit} />
         <BloodSugarChart data={data} />
       </div>

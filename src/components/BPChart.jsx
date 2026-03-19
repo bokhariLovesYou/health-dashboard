@@ -37,8 +37,8 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export function BPChart({ data, view = "average" }) {
-  // --- All readings view: one point per reading ---
+export function BPChart({ data, view = "average", compact = false }) {
+  // All readings
   const allReadingsData = data
     .filter((r) => r.systolic && r.diastolic)
     .sort((a, b) => {
@@ -51,7 +51,7 @@ export function BPChart({ data, view = "average" }) {
       Diastolic: r.diastolic,
     }));
 
-  // --- Daily average view ---
+  // Daily average
   const byDate = {};
   data.forEach((r) => {
     if (!r.date || !r.systolic) return;
@@ -74,6 +74,32 @@ export function BPChart({ data, view = "average" }) {
 
   const chartData = view === "all" ? allReadingsData : avgData;
 
+  // X-axis config differs between compact (overview) and full (individual page)
+  const xAxisProps =
+    view === "all"
+      ? {
+          angle: -45,
+          textAnchor: "end",
+          interval: Math.floor(chartData.length / 10),
+          height: 50,
+          tick: { fontSize: 10 },
+        }
+      : compact
+        ? {
+            angle: -45,
+            textAnchor: "end",
+            interval: "preserveStartEnd",
+            height: 50,
+            tick: { fontSize: 11 },
+          }
+        : {
+            angle: 0,
+            textAnchor: "middle",
+            interval: 0,
+            height: 30,
+            tick: { fontSize: 11 },
+          };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -91,18 +117,15 @@ export function BPChart({ data, view = "average" }) {
               top: 4,
               right: 16,
               left: -10,
-              bottom: view === "all" ? 40 : 0,
+              bottom: view === "all" || compact ? 40 : 0,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: view === "all" ? 10 : 11 }}
               tickLine={false}
               axisLine={false}
-              angle={view === "all" ? -45 : 0}
-              textAnchor={view === "all" ? "end" : "middle"}
-              interval={view === "all" ? Math.floor(chartData.length / 10) : 0}
+              {...xAxisProps}
             />
             <YAxis
               domain={[50, 160]}
