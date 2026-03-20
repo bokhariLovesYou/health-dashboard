@@ -57,3 +57,25 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  /* Hide browser UI artifacts */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Each section starts on a new page */
+  .print-page {
+    page-break-before: always;
+    padding-top: 2rem;
+  }
+  .print-page:first-child {
+    page-break-before: avoid;
+  }
+
+  /* Hide interactive chrome */
+  .print\:hidden {
+    display: none !important;
+  }
+}

@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
-import { Routes, Route, NavLink, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  NavLink,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import {
   Moon,
   Sun,
@@ -9,8 +15,9 @@ import {
   Droplets,
   RefreshCw,
   AlertCircle,
+  Printer,
 } from "lucide-react";
-import { format, subDays, isValid } from "date-fns";
+import { format } from "date-fns";
 import { useHealthData } from "./hooks/useHealthData";
 import { BPChart } from "./components/BPChart";
 import { PulseChart } from "./components/PulseChart";
@@ -22,6 +29,7 @@ import { StatsCard } from "./components/StatsCard";
 import { DateRangePicker } from "./components/DateRangePicker";
 import { Button } from "./components/ui/button";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { PrintView } from "./components/PrintView";
 
 const TABS = [
   { path: "/", label: "Overview" },
@@ -40,11 +48,11 @@ export default function App() {
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
   const { rawRows, loading, error } = useHealthData();
+  const navigate = useNavigate();
 
   if (dark) document.documentElement.classList.add("dark");
   else document.documentElement.classList.remove("dark");
 
-  // Derive min/max dates from data for the picker
   const { minDate, maxDate } = useMemo(() => {
     if (!rawRows.length) return { minDate: null, maxDate: null };
     const dates = rawRows.map((r) => r.date).filter(Boolean);
@@ -103,131 +111,197 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ScrollToTop />
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 min-w-0">
-            <Heart className="w-5 h-5 text-red-500 shrink-0" />
-            <div className="min-w-0">
-              <h1 className="font-bold text-sm sm:text-base leading-tight truncate">
-                Amjad Bukhari
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                Health Dashboard · DOB Feb 9, 1954
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Weight unit toggle */}
-            <div className="flex rounded-md border overflow-hidden text-xs">
-              <button
-                onClick={() => setWeightUnit("kg")}
-                className={`px-2.5 py-1.5 font-medium transition-colors ${weightUnit === "kg" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-              >
-                kg
-              </button>
-              <button
-                onClick={() => setWeightUnit("lbs")}
-                className={`px-2.5 py-1.5 font-medium transition-colors border-l ${weightUnit === "lbs" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-              >
-                lbs
-              </button>
-            </div>
-            {/* Date range picker */}
-            <DateRangePicker
-              from={dateFrom}
-              to={dateTo}
-              minDate={minDate}
-              maxDate={maxDate}
-              onChange={(from, to) => {
+      <Routes>
+        {/* Print route — fully outside main layout, no width constraints */}
+        <Route
+          path="/print"
+          element={
+            <PrintView
+              data={filteredData}
+              weightUnit={weightUnit}
+              stats={stats}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              onDateChange={(from, to) => {
                 setDateFrom(from);
                 setDateTo(to);
               }}
             />
-            {/* Dark mode */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() =>
-                setDark((d) => {
-                  const next = !d;
-                  localStorage.setItem("theme", next ? "dark" : "light");
-                  return next;
-                })
-              }
-            >
-              {dark ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </header>
+          }
+        />
 
-      {/* Tab nav */}
-      <nav className="border-b bg-background sticky top-14 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto">
-          {TABS.map((t) => (
-            <NavLink
-              key={t.path}
-              to={t.path}
-              end={t.path === "/"}
-              className={({ isActive }) =>
-                `px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  isActive
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`
-              }
-            >
-              {t.label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+        {/* All other routes — wrapped in main layout */}
+        <Route
+          path="*"
+          element={
+            <>
+              {/* Header */}
+              <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Heart className="w-5 h-5 text-red-500 shrink-0" />
+                    <div className="min-w-0">
+                      <h1 className="font-bold text-sm sm:text-base leading-tight truncate">
+                        Amjad Bukhari
+                      </h1>
+                      <p className="text-xs text-muted-foreground hidden sm:block">
+                        Health Dashboard · DOB Feb 9, 1954
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Weight unit toggle */}
+                    <div className="flex rounded-md border overflow-hidden text-xs">
+                      <button
+                        onClick={() => setWeightUnit("kg")}
+                        className={`px-2.5 py-1.5 font-medium transition-colors ${weightUnit === "kg" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                      >
+                        kg
+                      </button>
+                      <button
+                        onClick={() => setWeightUnit("lbs")}
+                        className={`px-2.5 py-1.5 font-medium transition-colors border-l ${weightUnit === "lbs" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                      >
+                        lbs
+                      </button>
+                    </div>
+                    {/* Date range picker */}
+                    <DateRangePicker
+                      from={dateFrom}
+                      to={dateTo}
+                      minDate={minDate}
+                      maxDate={maxDate}
+                      onChange={(from, to) => {
+                        setDateFrom(from);
+                        setDateTo(to);
+                      }}
+                    />
+                    {/* Print */}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 print:hidden"
+                      onClick={() => navigate("/print")}
+                    >
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                    {/* Dark mode */}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() =>
+                        setDark((d) => {
+                          const next = !d;
+                          localStorage.setItem(
+                            "theme",
+                            next ? "dark" : "light",
+                          );
+                          return next;
+                        })
+                      }
+                    >
+                      {dark ? (
+                        <Sun className="w-4 h-4" />
+                      ) : (
+                        <Moon className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </header>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {loading && (
-          <div className="flex items-center justify-center h-48 gap-3 text-muted-foreground">
-            <RefreshCw className="w-5 h-5 animate-spin" />
-            <span>Fetching data from Google Sheets…</span>
-          </div>
-        )}
-        {error && (
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Failed to load data</p>
-              <p className="text-xs mt-0.5 opacity-80">{error}</p>
-            </div>
-          </div>
-        )}
-        {!loading && !error && filteredData.length === 0 && (
-          <div className="text-center py-16 text-muted-foreground">
-            No data found for the selected range.
-          </div>
-        )}
-        {!loading && !error && filteredData.length > 0 && (
-          <Routes>
-            <Route path="/" element={<OverviewPage {...sharedProps} />} />
-            <Route path="/bp" element={<BPPage {...sharedProps} />} />
-            <Route path="/pulse" element={<PulsePage {...sharedProps} />} />
-            <Route path="/weight" element={<WeightPage {...sharedProps} />} />
-            <Route path="/sugar" element={<SugarPage {...sharedProps} />} />
-            <Route path="/data" element={<DataPage {...sharedProps} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        )}
-      </main>
+              {/* Tab nav */}
+              <nav className="border-b bg-background sticky top-14 z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto">
+                  {TABS.map((t) => (
+                    <NavLink
+                      key={t.path}
+                      to={t.path}
+                      end={t.path === "/"}
+                      className={({ isActive }) =>
+                        `px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                          isActive
+                            ? "border-foreground text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`
+                      }
+                    >
+                      {t.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </nav>
 
-      <footer className="border-t mt-12 py-4 text-center text-xs text-muted-foreground">
-        Data fetched live from Google Sheets · {stats.totalReadings ?? 0}{" "}
-        readings
-      </footer>
+              {/* Content */}
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+                {loading && (
+                  <div className="flex items-center justify-center h-48 gap-3 text-muted-foreground">
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span>Fetching data from Google Sheets…</span>
+                  </div>
+                )}
+                {error && (
+                  <div className="flex items-start gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive text-sm">
+                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">Failed to load data</p>
+                      <p className="text-xs mt-0.5 opacity-80">{error}</p>
+                    </div>
+                  </div>
+                )}
+                {!loading && !error && (
+                  <Routes>
+                    {filteredData.length > 0 ? (
+                      <>
+                        <Route
+                          path="/"
+                          element={<OverviewPage {...sharedProps} />}
+                        />
+                        <Route
+                          path="/bp"
+                          element={<BPPage {...sharedProps} />}
+                        />
+                        <Route
+                          path="/pulse"
+                          element={<PulsePage {...sharedProps} />}
+                        />
+                        <Route
+                          path="/weight"
+                          element={<WeightPage {...sharedProps} />}
+                        />
+                        <Route
+                          path="/sugar"
+                          element={<SugarPage {...sharedProps} />}
+                        />
+                        <Route
+                          path="/data"
+                          element={<DataPage {...sharedProps} />}
+                        />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </>
+                    ) : (
+                      <Route
+                        path="*"
+                        element={
+                          <div className="text-center py-16 text-muted-foreground">
+                            No data found for the selected range.
+                          </div>
+                        }
+                      />
+                    )}
+                  </Routes>
+                )}
+              </main>
+
+              <footer className="border-t mt-12 py-4 text-center text-xs text-muted-foreground">
+                Data fetched live from Google Sheets ·{" "}
+                {stats.totalReadings ?? 0} readings
+              </footer>
+            </>
+          }
+        />
+      </Routes>
     </div>
   );
 }
@@ -313,8 +387,6 @@ function BPPage({ data, stats }) {
         <StatBox label="High Readings (≥130)" value={high} />
         <StatBox label="Low Readings (<90)" value={low} />
       </div>
-
-      {/* Toggle */}
       <div className="flex rounded-md border w-fit overflow-hidden text-xs">
         <button
           onClick={() => setView("average")}
@@ -329,7 +401,6 @@ function BPPage({ data, stats }) {
           All Readings
         </button>
       </div>
-
       <BPChart data={data} view={view} />
     </div>
   );
@@ -354,8 +425,6 @@ function PulsePage({ data, stats }) {
           value={pulses.length ? Math.min(...pulses) + " bpm" : "—"}
         />
       </div>
-
-      {/* Toggle */}
       <div className="flex rounded-md border w-fit overflow-hidden text-xs">
         <button
           onClick={() => setView("average")}
@@ -370,7 +439,6 @@ function PulsePage({ data, stats }) {
           All Readings
         </button>
       </div>
-
       <PulseChart data={data} view={view} />
     </div>
   );
