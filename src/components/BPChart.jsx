@@ -84,22 +84,13 @@ export function BPChart({ data, view = "average", compact = false }) {
           height: 50,
           tick: { fontSize: 10 },
         }
-      : compact
-        ? {
-            angle: -45,
-            textAnchor: "end",
-            interval: "preserveStartEnd",
-            height: 50,
-            tick: { fontSize: 11 },
-          }
-        : {
-            angle: 0,
-            textAnchor: "middle",
-            interval: 0,
-            height: 30,
-            tick: { fontSize: 11 },
-          };
-
+      : {
+          angle: -45,
+          textAnchor: "end",
+          interval: "preserveStartEnd",
+          height: 50,
+          tick: { fontSize: 11 },
+        };
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -113,12 +104,7 @@ export function BPChart({ data, view = "average", compact = false }) {
         <ResponsiveContainer width="100%" height={320}>
           <LineChart
             data={chartData}
-            margin={{
-              top: 4,
-              right: 16,
-              left: -10,
-              bottom: view === "all" || compact ? 40 : 0,
-            }}
+            margin={{ top: 4, right: 16, left: -10, bottom: 40 }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis

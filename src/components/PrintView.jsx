@@ -93,22 +93,29 @@ export function PrintView({
   return (
     <div className="bg-background text-foreground">
       {/* Toolbar — full width, hidden when printing */}
-      <div className="print:hidden sticky top-0 z-50 border-b bg-background/95 backdrop-blur px-6 py-3 flex items-center justify-between">
-        {/* Left */}
-        <div className="flex items-center gap-3">
+      <div className="print:hidden sticky top-0 z-50 border-b bg-background/95 backdrop-blur px-4 py-3 flex flex-col gap-2">
+        {/* Row 1: Close + title */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="w-4 h-4" /> Close
+            </button>
+            <span className="text-muted-foreground">|</span>
+            <span className="text-sm font-medium">Print Preview</span>
+          </div>
+          {/* Print button */}
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => window.print()}
+            className="px-3 py-1.5 text-xs sm:text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap"
           >
-            <X className="w-4 h-4" /> Close
+            Print / Save as PDF
           </button>
-          <span className="text-muted-foreground">|</span>
-          <span className="text-sm font-medium">Print Preview</span>
         </div>
-
-        {/* Right */}
+        {/* Row 2: Date picker + weight toggle */}
         <div className="flex items-center gap-2">
-          {/* Date range picker — synced globally */}
           <DateRangePicker
             from={dateFrom}
             to={dateTo}
@@ -116,7 +123,6 @@ export function PrintView({
             maxDate={maxDate}
             onChange={onDateChange}
           />
-          {/* Weight unit toggle */}
           <div className="flex rounded-md border overflow-hidden text-xs">
             <button
               onClick={() => setWeightUnit("kg")}
@@ -131,18 +137,11 @@ export function PrintView({
               lbs
             </button>
           </div>
-          {/* Print button */}
-          <button
-            onClick={() => window.print()}
-            className="px-4 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Print / Save as PDF
-          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-8 py-10 space-y-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10 space-y-16">
         {/* ── Cover / Summary ── */}
         <section className="print-page">
           <div className="flex items-start justify-between mb-8 pb-6 border-b">
